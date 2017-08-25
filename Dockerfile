@@ -3,6 +3,7 @@ FROM openjdk:8u121-jdk-alpine
 MAINTAINER Marcel Ferry <me@marcelferry.com.br>
 
 RUN apk update && apk add --no-cache gnupg \
+    openrc \
     tar \
     ruby \
     zip \
