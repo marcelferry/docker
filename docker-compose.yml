@@ -16,7 +16,7 @@ jenkins-datavolume:
   image: "busybox"
   volumes:
     - ${volume_work}:/var/jenkins_home
-    - ${volume_sock}:/var/run/docker.sock 
+    - ${socks_file}:/var/run/docker.sock 
   labels:
     io.rancher.container.start_once: true
   entrypoint: ["chown", "-R", "1000:1000", "/var/jenkins_home"]
