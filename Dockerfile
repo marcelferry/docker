@@ -1,5 +1,7 @@
 FROM openjdk:8u121-jdk-alpine
 
+MAINTAINER Marcel Ferry <me@marcelferry.com.br>
+
 RUN apk update && apk add --no-cache git openssh-client curl unzip libstdc++ bash ttf-dejavu coreutils docker make py-pip && pip install docker-compose
 
 ARG user=jenkins
@@ -111,5 +113,9 @@ COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 USER root
 
 RUN install-plugins.sh workflow-job:2.11 antisamy-markup-formatter matrix-auth blueocean:$BLUEOCEAN_VERSION
+
+RUN install-plugins.sh credentials git git-client github github-api github-oauth greenballs junit plain-credentials scm-api ssh-credentials ssh-slaves swarm
+
+RUN install-plugins.sh tfs gitlab-plugin msbuild windows-slaves checkstyle cobertura ssh-agent nodejs dashboard-view ant gradle
 
 USER ${user}
