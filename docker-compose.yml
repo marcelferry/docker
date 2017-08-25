@@ -1,9 +1,22 @@
-master:
-  build: .
-  environment:
-    JAVA_OPTS: "-Djava.awt.headless=true"
+jenkins-primary:
+  image: "jenkins:2.60.1"
   ports:
-    - "50000:50000"
-    - "8080:8080"
+    - "${PORT1}:8080"
+    - "${PORT2}:50000"
+  labels:
+    io.rancher.sidekicks: jenkins-plugins,jenkins-datavolume
+    io.rancher.container.hostname_override: container_name
+  volumes_from:
+    - jenkins-plugins
+    - jenkins-datavolume
+  entrypoint: /usr/share/jenkins/rancher/jenkins.sh
+jenkins-plugins:
+  image: rancher/jenkins-plugins:v0.1.1
+jenkins-datavolume:
+  image: "busybox"
   volumes:
-    - /var/jenkins_home
+    - ${volume_work}:/var/jenkins_home
+    - ${volume_sock}:/var/run/docker.sock 
+  labels:
+    io.rancher.container.start_once: true
+  entrypoint: ["chown", "-R", "1000:1000", "/var/jenkins_home"]
