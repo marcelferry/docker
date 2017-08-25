@@ -2,7 +2,24 @@ FROM openjdk:8u121-jdk-alpine
 
 MAINTAINER Marcel Ferry <me@marcelferry.com.br>
 
-RUN apk update && apk add --no-cache git openssh-client curl unzip libstdc++ bash ttf-dejavu coreutils docker make py-pip && pip install docker-compose
+RUN apk update && apk add --no-cache gnupg \
+    tar \
+    ruby \
+    zip \
+    wget \
+    sudo \ 
+    git \
+    openssh-client \
+    curl \
+    unzip \
+    libstdc++ \
+    bash \
+    ttf-dejavu \
+    coreutils \
+    docker \
+    make \
+    py-pip \
+    && pip install docker-compose
 
 ARG user=jenkins
 ARG group=jenkins
@@ -99,6 +116,12 @@ EXPOSE ${http_port}
 EXPOSE ${agent_port}
 
 ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
+
+# Let the jenkins user run with passwordless sudo
+RUN echo "${user} ALL=NOPASSWD: ALL" >> /etc/sudoers
+    
+# Start docker at boot
+RUN rc-update add docker boot
 
 USER ${user}
 
