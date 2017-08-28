@@ -1,5 +1,6 @@
 jenkins-primary:
-  image: "jenkins:2.60.1"
+  image: "marcelferry/jenkinsci-maven-gradle-docker"
+  privileged: true
   ports:
     - "${PORT1}:8080"
     - "${PORT2}:50000"
