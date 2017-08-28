@@ -22,12 +22,6 @@
     required: true
     default: "/var/lib/docker/jenkins-ci"
     type: "string"
-  - variable: "socks_file"
-    description: "Docker socks file to connect"
-    label: "Socks file:"
-    required: true
-    default: "/var/run/docker.sock"
-    type: "string"
   - variable: "plugins"
     type: "multiline"
     label: "List of Plugins"
