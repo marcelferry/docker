@@ -3,8 +3,8 @@ FROM openjdk:8u121-jdk-alpine
 MAINTAINER Marcel Ferry <me@marcelferry.com.br>
 
 RUN apk update && apk add --no-cache gnupg \
-    openrc \
     tar \
+    shadow \
     ruby \
     zip \
     wget \
@@ -34,6 +34,9 @@ ARG USER_HOME_DIR="/root"
 ARG SHA=beb91419245395bd69a4a6edad5ca3ec1a8b64e41457672dc687c173a495f034
 ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
 
+ARG docker_port=2375
+
+
 RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
   && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
   && echo "${SHA}  /tmp/apache-maven.tar.gz" | sha256sum -c - \
@@ -44,12 +47,12 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
 ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
 
-#COPY mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
-#COPY settings-docker.xml /usr/share/maven/ref/
+COPY mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
+COPY settings-docker.xml /usr/share/maven/ref/
 
-#VOLUME "$USER_HOME_DIR/.m2"
+VOLUME "$USER_HOME_DIR/.m2"
 
-#ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
 
 ENV GRADLE_VERSION=3.0
 
@@ -120,14 +123,18 @@ ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 
 # Let the jenkins user run with passwordless sudo
 RUN echo "${user} ALL=NOPASSWD: ALL" >> /etc/sudoers
-    
-# Start docker at boot
-RUN rc-update add docker boot
+
+# DOCKER 
+COPY dockerd-entrypoint.sh /usr/local/bin/
+COPY dockerd-cmd.sh /usr/local/bin/
+EXPOSE ${docker_port}
+ENTRYPOINT ["dockerd-entrypoint.sh"]
+CMD ["dockerd-cmd.sh"]
 
 USER ${user}
 
 COPY jenkins-support /usr/local/bin/jenkins-support
-COPY jenkins.sh /usr/local/bin/jenkins.sh
+COPY jenkins-entrypoint.sh /usr/local/bin/jenkins-entrypoint.sh
 ENTRYPOINT ["/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
 
 # from a derived Dockerfile, can use `RUN plugins.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
