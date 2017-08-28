@@ -21,6 +21,20 @@ RUN apk update && apk add --no-cache gnupg \
     make \
     py-pip \
     && pip install docker-compose
+   
+##############
+### DOCKER ###
+##############
+
+ARG docker_port=2375
+
+EXPOSE ${docker_port}
+
+COPY dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
+
+###############
+### JENKINS ###
+###############
 
 ARG user=jenkins
 ARG group=jenkins
@@ -28,44 +42,6 @@ ARG uid=1000
 ARG gid=1000
 ARG http_port=8080
 ARG agent_port=50000
-
-ARG MAVEN_VERSION=3.5.0
-ARG USER_HOME_DIR="/root"
-ARG SHA=beb91419245395bd69a4a6edad5ca3ec1a8b64e41457672dc687c173a495f034
-ARG BASE_URL=https://apache.osuosl.org/maven/maven-3/${MAVEN_VERSION}/binaries
-
-ARG docker_port=2375
-
-
-RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
-  && curl -fsSL -o /tmp/apache-maven.tar.gz ${BASE_URL}/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
-  && echo "${SHA}  /tmp/apache-maven.tar.gz" | sha256sum -c - \
-  && tar -xzf /tmp/apache-maven.tar.gz -C /usr/share/maven --strip-components=1 \
-  && rm -f /tmp/apache-maven.tar.gz \
-  && ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
-
-ENV MAVEN_HOME /usr/share/maven
-ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
-
-COPY mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
-COPY settings-docker.xml /usr/share/maven/ref/
-
-VOLUME "$USER_HOME_DIR/.m2"
-
-ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
-
-ENV GRADLE_VERSION=3.0
-
-RUN set -ex \
-      && cd /usr/lib \
-      && curl -O --location --silent --show-error https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip \
-      && unzip -q gradle-${GRADLE_VERSION}-bin.zip \
-      && ln -s /usr/lib/gradle-${GRADLE_VERSION}/bin/gradle /usr/bin/ \
-      && rm -rf gradle-${GRADLE_VERSION}-bin.zip \
-          gradle-${GRADLE_VERSION}/bin/gradle.bat \
-          gradle-${GRADLE_VERSION}/getting-started.html \
-          gradle-${GRADLE_VERSION}/media \
-          /opt/jdk/*src.zip 
 
 ENV JENKINS_HOME /var/jenkins_home
 ENV JENKINS_SLAVE_AGENT_PORT ${agent_port}
@@ -124,29 +100,24 @@ ENV COPY_REFERENCE_FILE_LOG $JENKINS_HOME/copy_reference_file.log
 # Let the jenkins user run with passwordless sudo
 RUN echo "${user} ALL=NOPASSWD: ALL" >> /etc/sudoers
 
-# DOCKER 
-COPY dockerd-entrypoint.sh /usr/local/bin/
-COPY dockerd-cmd.sh /usr/local/bin/
-EXPOSE ${docker_port}
-ENTRYPOINT ["dockerd-entrypoint.sh"]
-CMD ["dockerd-cmd.sh"]
+RUN usermod -aG docker ${user}
 
 USER ${user}
 
 COPY jenkins-support /usr/local/bin/jenkins-support
-COPY jenkins-entrypoint.sh /usr/local/bin/jenkins-entrypoint.sh
+COPY jenkins.sh /usr/local/bin/jenkins.sh
 ENTRYPOINT ["/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
 
 # from a derived Dockerfile, can use `RUN plugins.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
 COPY plugins.sh /usr/local/bin/plugins.sh
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 
-USER root
+# RUN install-plugins.sh workflow-job:2.11 antisamy-markup-formatter \
+#	matrix-auth blueocean:$BLUEOCEAN_VERSION \ 
+#	credentials git git-client github github-api github-oauth \
+#	greenballs junit plain-credentials scm-api \
+#	ssh-credentials ssh-slaves swarm tfs gitlab-plugin msbuild \
+#	windows-slaves checkstyle cobertura ssh-agent nodejs \ 
+#	dashboard-view ant gradle
 
-RUN install-plugins.sh workflow-job:2.11 antisamy-markup-formatter matrix-auth blueocean:$BLUEOCEAN_VERSION
 
-RUN install-plugins.sh credentials git git-client github github-api github-oauth greenballs junit plain-credentials scm-api ssh-credentials ssh-slaves swarm
-
-RUN install-plugins.sh tfs gitlab-plugin msbuild windows-slaves checkstyle cobertura ssh-agent nodejs dashboard-view ant gradle
-
-USER ${user}

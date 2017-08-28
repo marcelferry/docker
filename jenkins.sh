@@ -1,5 +1,9 @@
 #! /bin/bash -e
 
+set -o pipefail
+
+sudo /usr/local/bin/dockerd-entrypoint.sh
+
 : "${JENKINS_HOME:="/var/jenkins_home"}"
 touch "${COPY_REFERENCE_FILE_LOG}" || { echo "Can not write to ${COPY_REFERENCE_FILE_LOG}. Wrong volume permissions?"; exit 1; }
 echo "--- Copying files at $(date)" >> "$COPY_REFERENCE_FILE_LOG"
@@ -24,3 +28,4 @@ fi
 
 # As argument is not jenkins, assume user want to run his own process, for example a `bash` shell to explore this image
 exec "$@"
+
