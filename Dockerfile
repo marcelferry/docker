@@ -112,12 +112,12 @@ ENTRYPOINT ["/bin/tini", "--", "/usr/local/bin/jenkins.sh"]
 COPY plugins.sh /usr/local/bin/plugins.sh
 COPY install-plugins.sh /usr/local/bin/install-plugins.sh
 
-# RUN install-plugins.sh workflow-job:2.11 antisamy-markup-formatter \
-#	matrix-auth blueocean:$BLUEOCEAN_VERSION \ 
-#	credentials git git-client github github-api github-oauth \
-#	greenballs junit plain-credentials scm-api \
-#	ssh-credentials ssh-slaves swarm tfs gitlab-plugin msbuild \
-#	windows-slaves checkstyle cobertura ssh-agent nodejs \ 
-#	dashboard-view ant gradle
+RUN install-plugins.sh workflow-job:2.11 antisamy-markup-formatter \
+	matrix-auth blueocean:$BLUEOCEAN_VERSION \ 
+	credentials git git-client github github-api github-oauth \
+	greenballs junit plain-credentials scm-api \
+	ssh-credentials ssh-slaves swarm tfs gitlab-plugin msbuild \
+	windows-slaves checkstyle cobertura ssh-agent nodejs \ 
+	dashboard-view ant gradle
 
 
